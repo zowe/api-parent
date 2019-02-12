@@ -23,7 +23,7 @@ def MASTER_BRANCH = "master"
 
 /**
 * Is this a release branch? Temporary workaround that won't break everything horribly if we merge.
-*/ 
+*/
 def RELEASE_BRANCH = false
 
 /**
@@ -74,7 +74,7 @@ def GIT_REVISION_LOOKUP = 'git log -n 1 --pretty=format:%h'
 /**
  * The credentials id field for the artifactory username and password
  */
-def ARTIFACTORY_CREDENTIALS_ID = 'GizaArtifactory'
+def ARTIFACTORY_CREDENTIALS_ID = 'nexus2-marktest-credential'
 
 /**
  * The email address for the artifactory
@@ -96,7 +96,7 @@ if (BRANCH_NAME == MASTER_BRANCH) {
     opts.push(disableConcurrentBuilds())
 } else {
     if (BRANCH_NAME.equals("gradle-conversion")){
-        RELEASE_BRANCH = true   
+        RELEASE_BRANCH = true
     }
     // Only keep 5 builds on other branches
     opts.push(buildDiscarder(logRotator(numToKeepStr: '5')))
@@ -118,7 +118,7 @@ pipeline {
     }
 
     stages {
-    
+
         /************************************************************************
          * STAGE
          * -----
@@ -153,7 +153,7 @@ pipeline {
                 }
             }
         }
-        
+
         /************************************************************************
          * STAGE
          * -----
@@ -291,7 +291,7 @@ pipeline {
                         return currentBuild.resultIsBetterOrEqualTo(BUILD_SUCCESS)
                     }
                     expression {
-                        return BRANCH_NAME.equals(MASTER_BRANCH) || RELEASE_BRANCH;   
+                        return BRANCH_NAME.equals(MASTER_BRANCH) || RELEASE_BRANCH;
                     }
                 }
             }
