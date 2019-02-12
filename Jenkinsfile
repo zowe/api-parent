@@ -24,7 +24,7 @@ def MASTER_BRANCH = "master"
 /**
 * Is this a release branch? Temporary workaround that won't break everything horribly if we merge.
 */
-def RELEASE_BRANCH = false
+def RELEASE_BRANCH = true
 
 /**
  * List of people who will get all emails for master builds
