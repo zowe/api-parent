@@ -24,7 +24,7 @@ def MASTER_BRANCH = "master"
 /**
 * Is this a release branch? Temporary workaround that won't break everything horribly if we merge.
 */
-def RELEASE_BRANCH = true
+def RELEASE_BRANCH = false
 
 /**
  * List of people who will get all emails for master builds
@@ -95,7 +95,7 @@ if (BRANCH_NAME == MASTER_BRANCH) {
     // twice in quick succession
     opts.push(disableConcurrentBuilds())
 } else {
-    if (BRANCH_NAME.equals("gradle-conversion")){
+    if (BRANCH_NAME.equals("nexus-test")){
         RELEASE_BRANCH = true
     }
     // Only keep 5 builds on other branches
