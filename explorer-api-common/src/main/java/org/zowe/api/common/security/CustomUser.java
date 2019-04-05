@@ -21,6 +21,7 @@ public class CustomUser extends User {
      */
     private static final long serialVersionUID = -7244581406731606670L;
 
+    // Rename to set cookie
     private final String ltpa;
 
     public CustomUser(String ltpa, String username, String password,

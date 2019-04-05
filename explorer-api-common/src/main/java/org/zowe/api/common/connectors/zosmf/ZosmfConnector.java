@@ -31,10 +31,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.zowe.api.common.connectors.ZConnector;
 import org.zowe.api.common.connectors.zosmf.exceptions.ZosmfConnectionException;
 import org.zowe.api.common.security.CustomUser;
 
-import javax.net.ssl.*;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 import java.io.IOException;
 import java.net.URI;
@@ -46,15 +51,17 @@ import java.security.cert.X509Certificate;
 
 @Slf4j
 @Service
-public class ZosmfConnector {
+public class ZosmfConnector implements ZConnector {
 
     private final String zosmfHost;
     private final int zosmfPort;
 
+    @Override
     public URI getFullUrl(String relativePath) throws URISyntaxException {
         return getFullUrl(relativePath, null);
     }
 
+    @Override
     public URI getFullUrl(String relativePath, String query) throws URISyntaxException {
         try {
             return new URI("https", null, zosmfHost, zosmfPort, "/zosmf/" + relativePath, query, null);
@@ -70,6 +77,7 @@ public class ZosmfConnector {
         zosmfPort = properties.getHttpsPort();
     }
 
+    @Override
     public HttpResponse request(RequestBuilder requestBuilder) throws IOException {
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -97,7 +105,8 @@ public class ZosmfConnector {
 
         HttpGet httpGet = new HttpGet(targetUrl);
         httpGet.setHeader("X-CSRF-ZOSMF-HEADER", "");
-        HttpResponse response = createIgnoreSSLClient.execute(httpGet, createPreemptiveHttpClientContext(credentialsProvider,targetUrl));
+        HttpResponse response = createIgnoreSSLClient.execute(httpGet,
+                createPreemptiveHttpClientContext(credentialsProvider, targetUrl));
         Header setCookieHeader = response.getFirstHeader("Set-Cookie");
         if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
             return setCookieHeader;
@@ -121,7 +130,8 @@ public class ZosmfConnector {
      * @throws NoSuchAlgorithmException
      * @throws KeyManagementException
      */
-    private HttpClientContext createPreemptiveHttpClientContext(CredentialsProvider credentialsProvider, URI targetUrl) {
+    private HttpClientContext createPreemptiveHttpClientContext(CredentialsProvider credentialsProvider,
+            URI targetUrl) {
         HttpHost targetHost = new HttpHost(targetUrl.getHost(), targetUrl.getPort(), targetUrl.getScheme());
         AuthCache authCache = new BasicAuthCache();
         authCache.put(targetHost, new BasicScheme());
@@ -134,15 +144,16 @@ public class ZosmfConnector {
 
     /**
      * Make a Preemptive Basic Authentication HttpClient
+     * 
      * @param credentialsProvider is the credential Provider
      * @return return the httpclient
      * @throws NoSuchAlgorithmException the exception
-     * @throws KeyManagementException the exception too
+     * @throws KeyManagementException   the exception too
      */
     public static HttpClient createPreemptiveHttpClientIgnoreSSL(CredentialsProvider credentialsProvider)
             throws NoSuchAlgorithmException, KeyManagementException {
         SSLContext sslcontext = SSLContext.getInstance("TLS");
-        sslcontext.init(null, new TrustManager[]{new X509TrustManager() {
+        sslcontext.init(null, new TrustManager[] { new X509TrustManager() {
             @Override
             public void checkClientTrusted(X509Certificate[] arg0, String arg1) {
             }
@@ -156,18 +167,17 @@ public class ZosmfConnector {
                 return new X509Certificate[0];
             }
 
-        } } , new java.security.SecureRandom());
+        } }, new java.security.SecureRandom());
         return HttpClientBuilder.create().setSSLContext(sslcontext).setDefaultCredentialsProvider(credentialsProvider)
-                .setSSLHostnameVerifier(new HostnameVerifier() {
+            .setSSLHostnameVerifier(new HostnameVerifier() {
 
-                    @Override
-                    public boolean verify(String s1, SSLSession s2) {
-                        return true;
-                    }
+                @Override
+                public boolean verify(String s1, SSLSession s2) {
+                    return true;
+                }
 
-                }).build();
+            }).build();
     }
-
 
     public static HttpClient createIgnoreSSLClientWithPassword(String userName, String password)
             throws NoSuchAlgorithmException, KeyManagementException {
@@ -175,7 +185,7 @@ public class ZosmfConnector {
         credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(userName, password));
 
         SSLContext sslcontext = SSLContext.getInstance("TLS");
-        sslcontext.init(null, new TrustManager[]{new X509TrustManager() {
+        sslcontext.init(null, new TrustManager[] { new X509TrustManager() {
             @Override
             public void checkClientTrusted(X509Certificate[] arg0, String arg1) {
             }
@@ -189,21 +199,21 @@ public class ZosmfConnector {
                 return new X509Certificate[0];
             }
 
-        } } , new java.security.SecureRandom());
+        } }, new java.security.SecureRandom());
         return HttpClientBuilder.create().setSSLContext(sslcontext).setDefaultCredentialsProvider(credentialsProvider)
-                .setSSLHostnameVerifier(new HostnameVerifier() {
+            .setSSLHostnameVerifier(new HostnameVerifier() {
 
-                    @Override
-                    public boolean verify(String s1, SSLSession s2) {
-                        return true;
-                    }
+                @Override
+                public boolean verify(String s1, SSLSession s2) {
+                    return true;
+                }
 
-                }).build();
+            }).build();
     }
 
     public static HttpClient createIgnoreSSLClient() throws KeyManagementException, NoSuchAlgorithmException {
         SSLContext sslcontext = SSLContext.getInstance("TLS");
-        sslcontext.init(null, new TrustManager[]{new X509TrustManager() {
+        sslcontext.init(null, new TrustManager[] { new X509TrustManager() {
             @Override
             public void checkClientTrusted(X509Certificate[] arg0, String arg1) {
             }
@@ -217,7 +227,7 @@ public class ZosmfConnector {
                 return new X509Certificate[0];
             }
 
-        } } , new java.security.SecureRandom());
+        } }, new java.security.SecureRandom());
         return HttpClientBuilder.create().setSSLContext(sslcontext).setSSLHostnameVerifier(new HostnameVerifier() {
 
             @Override

@@ -7,7 +7,7 @@
  *
  * Copyright IBM Corporation 2019
  */
-package org.zowe.api.common.zosmf.services;
+package org.zowe.api.common.services;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -18,7 +18,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.RequestBuilder;
 import org.apache.http.entity.ContentType;
 import org.springframework.util.StringUtils;
-import org.zowe.api.common.connectors.zosmf.ZosmfConnector;
+import org.zowe.api.common.connectors.ZConnector;
 import org.zowe.api.common.exceptions.HtmlEscapedZoweApiRestException;
 import org.zowe.api.common.exceptions.NoZosmfResponseEntityException;
 import org.zowe.api.common.exceptions.ServerErrorException;
@@ -31,13 +31,13 @@ import java.net.URISyntaxException;
 import java.util.stream.IntStream;
 
 @Slf4j
-public abstract class AbstractZosmfRequestRunner<T> {
+public abstract class AbstractZRequestRunner<T> {
 
-    public T run(ZosmfConnector zosmfConnector) {
+    public <Z extends ZConnector> T run(Z zConnector) {
         try {
-            RequestBuilder requestBuilder = prepareQuery(zosmfConnector);
+            RequestBuilder requestBuilder = prepareQuery(zConnector);
             URI uri = requestBuilder.getUri();
-            HttpResponse response = zosmfConnector.request(requestBuilder);
+            HttpResponse response = zConnector.request(requestBuilder);
             ResponseCache responseCache = new ResponseCache(response);
             return processResponse(responseCache, uri);
         } catch (IOException | URISyntaxException e) {
@@ -48,7 +48,7 @@ public abstract class AbstractZosmfRequestRunner<T> {
 
     protected abstract int[] getSuccessStatus();
 
-    protected abstract RequestBuilder prepareQuery(ZosmfConnector zosmfConnector)
+    protected abstract <Z extends ZConnector> RequestBuilder prepareQuery(Z zConnector)
             throws URISyntaxException, IOException;
 
     T processResponse(ResponseCache responseCache, URI uri) throws IOException {
