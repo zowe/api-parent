@@ -69,7 +69,9 @@ public class ZosmfConnectorLtpaAuth extends ZosmfConnector {
 
         HttpGet httpGet = new HttpGet(targetUrl);
         httpGet.setHeader("X-CSRF-ZOSMF-HEADER", "");
+        log.debug("getLtpaHeader - Starting request against {}", targetUrl);
         HttpResponse response = createIgnoreSSLClient.execute(httpGet, createPreemptiveHttpClientContext(credentialsProvider,targetUrl));
+        log.debug("getLtpaHeader - Response received: {}", response.getStatusLine());
         Header setCookieHeader = response.getFirstHeader("Set-Cookie");
         if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
             return setCookieHeader;

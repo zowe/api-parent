@@ -39,7 +39,9 @@ public abstract class AbstractZosmfRequestRunner<T> {
         try {
             RequestBuilder requestBuilder = prepareQuery(zosmfConnector);
             URI uri = requestBuilder.getUri();
+            log.debug("run - Starting request against {}", uri);
             HttpResponse response = zosmfConnector.executeRequest(requestBuilder);
+            log.debug("run - Response recieved: {}", response.getStatusLine());
             ResponseCache responseCache = new ResponseCache(response);
             return processResponse(responseCache, uri);
         } catch (IOException | URISyntaxException e) {
