@@ -5,7 +5,7 @@ group 'org.zowe.explorer'
 
 buildscript {
     ext {
-        licenseGradlePluginVerion = '0.14.0'
+        licenseGradlePluginVerion = '0.15.0'
     }
 
     ext.mavenRepositories = {
@@ -16,6 +16,9 @@ buildscript {
                 username mavenUser
                 password mavenPassword
             }
+        }
+        maven {
+            url "https://plugins.gradle.org/m2/"
         }
         maven {
             url artifactoryMavenRepo
@@ -32,9 +35,11 @@ buildscript {
         classpath 'org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:2.7'
         classpath 'com.palantir:jacoco-coverage:0.4.0'
         classpath 'net.researchgate:gradle-release:2.6.0'
-        classpath "gradle.plugin.nl.javadude.gradle.plugins:license-gradle-plugin:${licenseGradlePluginVerion}"
+        classpath "gradle.plugin.com.hierynomus.gradle.plugins:license-gradle-plugin:${licenseGradlePluginVerion}"
         classpath 'org.owasp:dependency-check-gradle:3.3.4'
     }
+
+    
 }
 
 apply plugin: 'com.palantir.jacoco-full-report'
@@ -49,12 +54,15 @@ allprojects {
     apply plugin: 'idea'
     apply plugin: 'maven'
     apply plugin: 'com.github.hierynomus.license'
+    apply plugin: 'com.github.hierynomus.license-report'
     apply plugin: 'org.owasp.dependencycheck'
 
     repositories mavenRepositories
 
     sourceCompatibility = 1.8
     version = version
+
+
 
     idea {
         module {
@@ -68,7 +76,9 @@ allprojects {
     }
 }
 
+
 subprojects {
+
     license {
         header rootProject.file('.license/LICENSE_HEADER')
         ext.year = Calendar.getInstance().get(Calendar.YEAR)
@@ -82,13 +92,35 @@ subprojects {
     tasks.withType(Test) {
         maxParallelForks = Runtime.runtime.availableProcessors()
     }
-
 }
 
 configurations {
     all*.exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
     all*.exclude group: 'com.fasterxml.jackson.module', module: 'jackson-module-kotlin'
 }
+
+downloadLicenses {
+    includeProjectDependencies = true;
+}
+
+// These projects will not have their dependencies reported in the "downloadLicenses" task.
+def excludedScanProjects = [ "explorer-api-common-test"]
+
+/* 
+*   To prevent reporting dependencies from test modules or other modules which 
+*   will not ship in binary format, we disable the downloadLicenses task and
+*   disallow access to the runtime configuration.
+*
+*   Disabling the downloadLicenses task is not required by downstream consumers (license_finder), but consistent with intent.
+*
+*   Disallowed runtime config access is required to target https://github.com/hierynomus/license-gradle-plugin/blob/71bc244799725508f3a5f6b19058ec81a9ecc3ee/src/main/groovy/nl/javadude/gradle/plugins/license/LicenseResolver.groovy#L145
+ */
+configure(subprojects.findAll { excludedScanProjects.contains(it.name) }) {
+    def runtimeConf = it.configurations.runtime
+    runtimeConf.setCanBeResolved(false);
+    it.getTasksByName("downloadLicenses", false)*.setEnabled(false);
+}
+
 
 task jacocoSubProjects() {
     subprojects.findAll { it.name in javaProjectsWithUnitTests }.each { dependsOn("${it.name}:jacocoTestReport") }
